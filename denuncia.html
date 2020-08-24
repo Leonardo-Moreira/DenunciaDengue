@@ -1,0 +1,94 @@
+<?php
+include "db/conectaDB.php";
+?>
+
+<html>
+<head>
+    <title>Zer@Dengue - Tela de Cadastro de Denúncia</title>
+    <meta charset="utf-8">
+      <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+function validar(){
+    if (campoO.value.length < 1) {
+        alert('Algum campo ficou em branco');
+        return false;
+    }
+}
+</script>
+        <div class="login-box">
+        <h1>Zer@Dengue - Tela de Denúncio de Usuário</h1>
+        <h3>Todos os campos são obrigatorios exceto o envio da foto!</h3>
+
+        <form action="" method="post" enctype="multipart/form-data">
+
+          <div class="textbox">
+            <i class="fas fa-user"></i>
+              <input type="text" name="rua" id="campoO" placeholder="Digite o ENDEREÇO">
+          </div>
+
+          <div class="textbox">
+            <i class="fas fa-user"></i>
+              <input type="file" name="foto" id="foto" placeholder="Envie apenas 1 foto!">
+          </div>
+
+          <div class="textbox">
+            <i class="fas fa-user"></i>
+              <textarea name="descricao" rows="10" cols="40"></textarea>
+          </div>
+
+            <button type="submit" class="btn" onClick="return validar()">Cadastrar</button>
+        </form>
+    </div>
+</body>
+<?php
+
+if($_POST["rua"]){
+
+        $arquivo_tmp = $_FILES[ 'foto' ][ 'tmp_name' ];
+        $nome = $_FILES[ 'foto' ][ 'name' ];
+
+        // Pega a extensão
+        $extensao = pathinfo ( $nome, PATHINFO_EXTENSION );
+
+        // Converte a extensão para minúsculo
+        $extensao = strtolower ( $extensao );
+
+        // Somente imagens, .jpg;.jpeg;.gif;.png
+        // Aqui eu enfileiro as extensões permitidas e separo por ';'
+        // Isso serve apenas para eu poder pesquisar dentro desta String
+        if ( strcasecmp ( '.jpg;.jpeg;.gif;.png', $extensao ) ) {
+            // Cria um nome único para esta imagem
+            // Evita que duplique as imagens no servidor.
+            // Evita nomes com acentos, espaços e caracteres não alfanuméricos
+            $novoNome = uniqid ( time () ) . '.' . $extensao;
+
+            // Concatena a pasta com o nome
+            $destino = 'fotos/' . $novoNome;
+
+            // tenta mover o arquivo para o destino
+            move_uploaded_file ( $arquivo_tmp, $destino );
+        }
+        else
+            echo 'Você poderá enviar apenas arquivos "*.jpg;*.jpeg;*.gif;*.png"<br />';
+
+        if($_FILES[ 'foto' ][ 'name' ]=="")
+            $destino="";
+
+    $query = "INSERT INTO tb_denuncia (rua,foto,descricao)
+    values ('".$_POST["rua"]."','".$destino."','".$_POST["descricao"]."')";
+    $result = mysql_query($query);
+    if (mysql_errno()) { //Pergunta se aconteceu algum erro no comando acima.
+         echo "<script>alert('Erro confira os dados!')</script>"; //O Comando "echo" imprime o texto de erro no html porque o php é oculto.
+      } //A função mysql_errno() é carregada com o detalhes no erro SQL
+      else
+      {
+          echo "<script>alert('Denúncia cadastrada com SUSSESSO!')</script>";
+          session_start();
+          $_SESSION['email']=$_POST["email"];
+          header("Location: lista.php");
+      }
+
+}
+?>
